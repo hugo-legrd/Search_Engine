@@ -1,11 +1,3 @@
-#!/usr/bin/env python3
-# -*- coding: utf-8 -*-
-"""
-Created on Wed Sep 7 07:54:41 2022
-
-@author: ESTERBET Julien and LEGEARD Hugo
-"""
-
 import csv
 import re
 from math import log
@@ -18,7 +10,7 @@ from tkinter import ttk
 
 # Creation of the graphic interface
 root = Tk()
-root.title("TED Search Engine")
+root.title("TED Talk Search Engine")
 root.geometry("800x500")
 
 # Search bar zone
