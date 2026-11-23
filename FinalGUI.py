@@ -11,25 +11,39 @@ import re
 from math import log
 import webbrowser
 from tkinter import * 
+from tkinter import ttk
 
 
 ########################## Initialisation Interface Graphique ##########################
 
-#Creation of the graphic interface
+# Creation of the graphic interface
 root = Tk()
+root.title("TED Search Engine")
+root.geometry("800x500")
+
+# Search bar zone
+top = ttk.Frame(root)
+top.pack(side=TOP, fill=X, padx=10, pady=10)
+
+# Results zone
+bottom = ttk.Frame(root)
+bottom.pack(side=TOP, fill=BOTH, expand=True, padx=10, pady=(0, 10))
 
 #ScrollBar creation
-scrollbar = Scrollbar(root)
-scrollbar.pack( side = RIGHT, fill = Y )
+scrollbar = ttk.Scrollbar(bottom)
+scrollbar.pack(side=RIGHT, fill=Y)
 
 #Label Creation 
-L1 = Label(root, text="Your keywords : ")
-L1.pack( side = LEFT)
+L1 = ttk.Label(top, text="Your keywords :")
+L1.pack(side=LEFT, padx=(0, 5))
 
 #Entry to enter and get the keywords
 keywords = StringVar()
-keywordInput = Entry(root, textvar=keywords, bd = 5)
-keywordInput.pack(side = LEFT)
+keywordInput = ttk.Entry(top, textvariable=keywords)
+keywordInput.pack(side=LEFT, fill=X, expand=True, padx=5)
+keywordInput.focus()
+
+currentUrls = []
 
 ########################## Fonctions ##########################
 
@@ -46,7 +60,7 @@ def index_words_to_urls(dico) :
     """Create an index { words --> Urls }"""
     res = {}
     for key, value in dico.items() :
-        pattern = re.compile('\W+')
+        pattern = re.compile(r'\W+')
         val = key
         val = re.sub(pattern, ' ', val)
         val = val.lower()
@@ -95,8 +109,6 @@ def find_a_word(index1, index2, index3, wordToFind) :
             for key, value in index3.items() :
                 if key == x :
                     res[key] = value[wordToFind]*idf
-    else : 
-        res[wordToFind] = 'This word is not in the database'
     return res
 
 def find_some_words(index1, index2, index3) :
@@ -135,25 +147,45 @@ def intersection_of_results(dico) :
                         res[keyBis] = x
     return sorted(res.items(), key=lambda x: x[1], reverse=True)
 
+def url_to_title(url):
+    url = url.rstrip('\n')
+    splitUrl = url.split('/')
+    title = splitUrl[-1]
+    spaceTitle = title.replace('_', ' ')
+    finalTitle = spaceTitle.title()
+    return finalTitle
+
+
 ########################## Fonction de l'Interface Graphique ######################
 
-#Check if it's an url and open the link when you click on it
+#Open the url of the selected result in the browser
 def weblink(*args):
-    index = lb.curselection()[0]
-    item = lb.get(index)
-    if 'https://' in item:
-        webbrowser.open_new(item)
+    selection = lb.curselection()
+    if not selection : 
+        return
+    if not currentUrls : 
+        return
+    index = selection[0]
+    item = currentUrls[index]
+    webbrowser.open_new(item)
         
 #Insert The url in the list
-def printUrl(): 
+def printUrl(*args): 
+    currentUrls.clear()
+    lb.delete(0, END)
     tupleUrlTFIDF = intersection_of_results(find_some_words(index1, index2, index3))
     listeUrl = []
     for tupleUrl in tupleUrlTFIDF :
         listeUrl.append(tupleUrl[0])
-        
+
+    if not listeUrl : 
+        lb.insert(END, "No result for this search.")
+        return
+    
     for url in listeUrl :
         url = url.rstrip('\n')
-        lb.insert(END, url)
+        currentUrls.append(url)
+        lb.insert(END, url_to_title(url))
         
 #Clear the list and the input entry
 def deleteUrl() :
@@ -163,7 +195,7 @@ def deleteUrl() :
 ########################## Main ##########################
 
 #Open the csv file
-doc = open('/Users/hugolegeard/Downloads/Fac/M1_EIT/S7/BDA/TP/TED_transcripts.csv', 'r')
+doc = open('TED_transcripts.csv/TED_transcripts.csv', 'r', encoding='utf-8')
 dictionnaire = csv_to_dict(doc)
 
 print('Index charging...')
@@ -171,21 +203,25 @@ index1 = index_words_to_urls(dictionnaire)
 index2 = index_words_to_idf(index1)
 index3 = index_urls_to_words(dictionnaire)
 print('Index charged.')
-print(intersection_of_results(find_some_words(index1, index2, index3)))
 
 ########################## Fin Initialisation Interface Graphique ##########################
 
 #Creation of a button that will submit the keywords
-button= Button(root, text="Enter", command= printUrl)
-button.pack(side = LEFT)
+button= ttk.Button(top, text="Search", command= printUrl)
+button.pack(side=LEFT, padx=5)
 
-buttonDelete = Button(root, text="Do another research", command= deleteUrl)
+buttonDelete = ttk.Button(top, text="Clear", command= deleteUrl)
 buttonDelete.pack(side=LEFT)
 
 
 #Creation of a ListBox where all the urls will be
-lb = Listbox(root,  yscrollcommand = scrollbar.set)
+lb = Listbox(bottom,  yscrollcommand = scrollbar.set, font=('Segoe UI', 10),
+             activestyle="none", borderwidth=0, highlightthickness=0)
 lb.bind('<<ListboxSelect>>', weblink)
-lb.pack(fill=BOTH, expand=True)
+lb.pack(side=LEFT, fill=BOTH, expand=True)
+
+keywordInput.bind('<Return>', printUrl)
+
+scrollbar.config(command=lb.yview)
      
 root.mainloop()
