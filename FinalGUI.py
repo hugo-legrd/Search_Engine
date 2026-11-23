@@ -168,7 +168,7 @@ def weblink(*args):
     index = selection[0]
     item = currentUrls[index]
     webbrowser.open_new(item)
-        
+
 #Insert The url in the list
 def printUrl(*args): 
     currentUrls.clear()
@@ -195,7 +195,7 @@ def deleteUrl() :
 ########################## Main ##########################
 
 #Open the csv file
-doc = open('TED_transcripts.csv/TED_transcripts.csv', 'r', encoding='utf-8')
+doc = open('TED_transcripts.csv', 'r', encoding='utf-8')
 dictionnaire = csv_to_dict(doc)
 
 print('Index charging...')
